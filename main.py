@@ -1,5 +1,6 @@
 import os
 import requests
+import json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -10,12 +11,23 @@ TOKEN = os.environ.get("TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
 
 URL = "https://www.obilet.com/seferler/409-678/2026-03-13"
+DOSYA = "firmalar.json"
 
 def send_message(text):
     requests.post(
         f"https://api.telegram.org/bot{TOKEN}/sendMessage",
         data={"chat_id": CHAT_ID, "text": text}
     )
+
+def onceki_firmalari_oku():
+    if not os.path.exists(DOSYA):
+        return []
+    with open(DOSYA, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+def firmalari_kaydet(firma_listesi):
+    with open(DOSYA, "w", encoding="utf-8") as f:
+        json.dump(firma_listesi, f, ensure_ascii=False)
 
 def check_ticket():
     options = Options()
@@ -33,8 +45,30 @@ def check_ticket():
 
     page_source = driver.page_source
 
-    if "Sefer Bulunamadı" not in page_source and "Sefer bulunamadı" not in page_source:
-        send_message("🚍 Şanlıurfa → Salihli için 13 Mart 2026 sefer görünüyor!")
+    # Basit firma isim yakalama (html içinde geçen firma adları)
+    firma_listesi = []
+
+    potansiyel_firmalar = [
+        "kamilkoç",
+        "stardiyarbakır",
+        "özlemdiyarbakır",
+        "hasdiyarbakır",
+        "zümrüt",
+        "mardinvif",
+        "diyarbakırsur"
+    ]
+
+    for firma in potansiyel_firmalar:
+        if firma.lower() in page_source.lower():
+            firma_listesi.append(firma)
+
+    onceki = onceki_firmalari_oku()
+    yeni_firmalar = [f for f in firma_listesi if f not in onceki]
+
+    if yeni_firmalar:
+        mesaj = "🚨 Yeni firma eklendi:\n" + "\n".join(yeni_firmalar)
+        send_message(mesaj)
+        firmalari_kaydet(firma_listesi)
 
     driver.quit()
 
