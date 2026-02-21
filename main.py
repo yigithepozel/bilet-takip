@@ -1,13 +1,25 @@
-import os
-import requests
+name: Bilet Kontrol
 
-TOKEN = os.environ.get("TOKEN")
-CHAT_ID = os.environ.get("CHAT_ID")
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
 
-def send_message(text):
-    requests.post(
-        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-        data={"chat_id": CHAT_ID, "text": text}
-    )
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
 
-send_message("✅ TEST MESAJI: Bot çalışıyor hocam 🚀")
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run bot
+        run: python main.py
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
