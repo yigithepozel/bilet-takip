@@ -1,25 +1,41 @@
-name: Bilet Kontrol
+import os
+import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
-on:
-  schedule:
-    - cron: "*/15 * * * *"
-  workflow_dispatch:
+TOKEN = os.environ.get("TOKEN")
+CHAT_ID = os.environ.get("CHAT_ID")
 
-jobs:
-  run-bot:
-    runs-on: ubuntu-latest
+URL = "https://www.obilet.com/seferler/409-678/2026-03-13"
 
-    steps:
-      - uses: actions/checkout@v3
+def send_message(text):
+    requests.post(
+        f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+        data={"chat_id": CHAT_ID, "text": text}
+    )
 
-      - name: Install Chrome
-        uses: browser-actions/setup-chrome@v1
+def check_ticket():
+    options = Options()
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        options=options
+    )
 
-      - name: Run bot
-        run: python main.py
-        env:
-          TOKEN: ${{ secrets.TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
+    driver.get(URL)
+    time.sleep(8)
+
+    page_source = driver.page_source
+
+    if "Sefer Bulunamadı" not in page_source and "Sefer bulunamadı" not in page_source:
+        send_message("🚍 Şanlıurfa → Salihli için 13 Mart 2026 sefer görünüyor!")
+
+    driver.quit()
+
+check_ticket()
