@@ -11,6 +11,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          persist-credentials: true
 
       - name: Install Chrome
         uses: browser-actions/setup-chrome@v1
@@ -23,3 +25,11 @@ jobs:
         env:
           TOKEN: ${{ secrets.TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
+
+      - name: Commit firmalar.json
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add firmalar.json
+          git commit -m "Update firmalar list" || echo "No changes"
+          git push
