@@ -1,8 +1,10 @@
 import os
-import time
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import time
 
 TOKEN = os.environ.get("TOKEN")
 CHAT_ID = os.environ.get("CHAT_ID")
@@ -17,11 +19,15 @@ def send_message(text):
 
 def check_ticket():
     options = Options()
-    options.add_argument("--headless")
+    options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
 
-    driver = webdriver.Chrome(options=options)
+    driver = webdriver.Chrome(
+        service=Service(ChromeDriverManager().install()),
+        options=options
+    )
+
     driver.get(URL)
     time.sleep(8)
 
@@ -32,6 +38,4 @@ def check_ticket():
 
     driver.quit()
 
-while True:
-    check_ticket()
-    time.sleep(600)
+check_ticket()
