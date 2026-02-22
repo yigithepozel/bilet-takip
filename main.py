@@ -4,7 +4,6 @@ import json
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 
@@ -42,17 +41,26 @@ def check_ticket():
     )
 
     driver.get(URL)
-    time.sleep(10)  # sayfanın yüklenmesi için bekle
+    time.sleep(8)
 
-    # Görünür firma elementlerini çekiyoruz
-    firma_elements = driver.find_elements(By.CSS_SELECTOR, "div.seferFirmasi")  # örnek selector
-    firma_listesi = [e.text.strip().lower() for e in firma_elements if e.text.strip()]
+    page_source = driver.page_source
 
-    driver.quit()
+    # Basit firma isim yakalama (html içinde geçen firma adları)
+    firma_listesi = []
 
-    if not firma_listesi:
-        print("Firma bulunamadı.")
-        return
+    potansiyel_firmalar = [
+        "kamilkoç",
+        "stardiyarbakır",
+        "özlemdiyarbakır",
+        "hasdiyarbakır",
+        "zümrütturizm,
+        "mardinvif",
+        "diyarbakırsur"
+    ]
+
+    for firma in potansiyel_firmalar:
+        if firma.lower() in page_source.lower():
+            firma_listesi.append(firma)
 
     onceki = onceki_firmalari_oku()
     yeni_firmalar = [f for f in firma_listesi if f not in onceki]
@@ -60,8 +68,8 @@ def check_ticket():
     if yeni_firmalar:
         mesaj = "🚨 Yeni firma eklendi:\n" + "\n".join(yeni_firmalar)
         send_message(mesaj)
+        firmalari_kaydet(firma_listesi)
 
-    firmalari_kaydet(firma_listesi)
-    print("Kontrol tamamlandı. Firma listesi kaydedildi.")
+    driver.quit()
 
 check_ticket()
